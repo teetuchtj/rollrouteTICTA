@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>RollRoute — แผนที่ความเข้าถึงสำหรับรถเข็นในไทย</title>
+<meta name="description" content="RollRoute: แผนที่ความเข้าถึงและคุณภาพเส้นทางในประเทศไทย สร้างเพื่อผู้ใช้รถเข็นเป็นหลัก และเป็นประโยชน์สำหรับผู้เข็นรถเข็นเด็ก นักเดิน และนักวิ่งด้วย ข้อมูลจากการร่วมมือของชุมชน" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='13' r='7.2' fill='none' stroke='%230b5566' stroke-width='2'/%3E%3Ccircle cx='11' cy='13' r='1.6' fill='%230b5566'/%3E%3Cpath d='M11 13 L11 6.3 M11 13 L15.8 16.4 M11 13 L6.1 10.4' stroke='%230b5566' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='19.6' cy='4.8' r='2' fill='%23c97a1a'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<link rel="stylesheet" href="css/styles.css?v=8" />
+</head>
+<body>
+<div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
+<a href="#main-content" class="skip-link" data-th="ข้ามไปยังเนื้อหาหลัก" data-en="Skip to main content">ข้ามไปยังเนื้อหาหลัก</a>
+<div id="a11y-live" class="visually-hidden" role="status" aria-live="polite"></div>
+
+<header class="site-header">
+  <a href="#" class="brand" id="brand-home-link" data-th-aria="RollRoute — กลับหน้าแรก" data-en-aria="RollRoute — go to home" aria-label="RollRoute — กลับหน้าแรก">
+    <span class="brand-mark" data-icon="logo" aria-hidden="true"></span>
+    <span class="brand-text">
+      <span class="brand-name">RollRoute</span>
+      <span class="brand-tagline" data-th="ตรวจสอบก่อนเดินทาง" data-en="Check before you travel">ตรวจสอบก่อนเดินทาง</span>
+    </span>
+  </a>
+  <div class="header-stats" id="header-stats" aria-hidden="true"></div>
+</header>
+
+<div class="a11y-bar" id="a11y-bar" role="toolbar" data-th-aria="แถบเครื่องมือการเข้าถึง" data-en-aria="Accessibility toolbar" aria-label="แถบเครื่องมือการเข้าถึง"></div>
+
+<main id="main-content">
+  <section class="map-section" aria-label="แผนที่ความเข้าถึง">
+    <div id="map" role="region" data-th-aria="แผนที่แสดงสถานที่และสถานะความเข้าถึง" data-en-aria="Map showing places and accessibility status" aria-label="แผนที่แสดงสถานที่และสถานะความเข้าถึง"></div>
+
+    <div class="map-overlay-top">
+      <div class="search-panel">
+        <div class="search-row">
+          <span aria-hidden="true" data-icon="search"></span>
+          <label for="search-input" class="visually-hidden" data-th="ค้นหาชื่อสถานที่" data-en="Search place name">ค้นหาชื่อสถานที่</label>
+          <input type="search" id="search-input" class="search-input" data-th-placeholder="ค้นหาสถานที่..." data-en-placeholder="Search places..." placeholder="ค้นหาสถานที่..." />
+          <button type="button" class="filter-toggle-btn" id="filter-toggle" aria-expanded="false" aria-controls="filter-panel">
+            <span aria-hidden="true" data-icon="filter"></span>
+            <span data-th="ตัวกรอง" data-en="Filters">ตัวกรอง</span>
+          </button>
+        </div>
+        <div class="nearme-wrap">
+          <button type="button" class="nearme-cta" id="nearme-cta" data-th-aria="แสดงสถานที่เข้าถึงได้ใกล้คุณ โดยใช้ตำแหน่งปัจจุบัน" data-en-aria="Show accessible places near you, using your current location" aria-label="แสดงสถานที่เข้าถึงได้ใกล้คุณ โดยใช้ตำแหน่งปัจจุบัน">
+            <span class="nearme-cta-icon" aria-hidden="true" data-icon="locate"></span>
+            <span class="nearme-cta-text">
+              <span class="nearme-cta-title" data-th="สถานที่เข้าถึงได้ใกล้คุณ" data-en="Accessible places near you">สถานที่เข้าถึงได้ใกล้คุณ</span>
+              <span class="nearme-cta-sub" data-th="แตะเพื่อใช้ตำแหน่งปัจจุบัน" data-en="Tap to use your current location">แตะเพื่อใช้ตำแหน่งปัจจุบัน</span>
+            </span>
+            <span class="nearme-cta-arrow" aria-hidden="true" data-icon="chevronRight"></span>
+          </button>
+          <div class="coach-hint" id="coach-hint" role="status" hidden>
+            <p data-th="เริ่มที่นี่" data-en="Start here">เริ่มที่นี่</p>
+            <button type="button" class="coach-hint-dismiss" id="coach-hint-dismiss" data-th-aria="ปิดคำแนะนำ" data-en-aria="Dismiss hint" aria-label="ปิดคำแนะนำ">
+              <span aria-hidden="true" data-icon="close"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mode-switch" id="mode-switch" role="group" data-th-aria="เลือกมุมมองแผนที่" data-en-aria="Choose map view mode" aria-label="เลือกมุมมองแผนที่">
+        <button type="button" class="mode-switch-btn" id="mode-walkrun-btn" aria-pressed="true" data-th-aria="โหมดเดิน-วิ่ง เน้นพื้นผิว ร่มเงา และแสงสว่าง" data-en-aria="Walk and run mode, emphasizing surface, shade, and lighting">
+          <span aria-hidden="true" data-icon="modeWalk"></span>
+          <span data-th="เดิน/วิ่ง" data-en="Walk/run">เดิน/วิ่ง</span>
+        </button>
+        <button type="button" class="mode-switch-btn" id="mode-access-btn" aria-pressed="false" data-th-aria="โหมดการเข้าถึง สำหรับผู้ใช้รถเข็นและรถเข็นเด็ก" data-en-aria="Accessibility mode, for wheelchair and stroller users">
+          <span aria-hidden="true" data-icon="modeAccess"></span>
+          <span data-th="การเข้าถึง" data-en="Accessibility">การเข้าถึง</span>
+        </button>
+      </div>
+
+      <div class="filter-panel" id="filter-panel" hidden>
+        <div class="filter-group">
+          <h3 data-th="หมวดหมู่" data-en="Category">หมวดหมู่</h3>
+          <div class="chip-row" id="filter-categories"></div>
+        </div>
+        <div class="filter-group">
+          <h3 data-th="สถานะความเข้าถึง" data-en="Accessibility status">สถานะความเข้าถึง</h3>
+          <div class="chip-row" id="filter-statuses"></div>
+        </div>
+        <div class="filter-group" id="filter-group-path">
+          <h3 data-th="คุณภาพเส้นทาง" data-en="Path quality">คุณภาพเส้นทาง</h3>
+          <div class="chip-row" id="filter-path"></div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-ghost" id="filter-reset" data-th="ล้างตัวกรองทั้งหมด" data-en="Clear all filters">ล้างตัวกรองทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-panel" id="legend-panel">
+      <button type="button" class="legend-header" id="legend-toggle" aria-expanded="true" aria-controls="legend-body">
+        <span data-th="คำอธิบายสัญลักษณ์" data-en="Legend">คำอธิบายสัญลักษณ์</span>
+        <span aria-hidden="true" data-icon="chevronDown"></span>
+      </button>
+      <div class="legend-body" id="legend-body"></div>
+    </div>
+
+    <button type="button" class="locate-btn" id="locate-btn" style="bottom:88px" data-th-aria="ไปยังตำแหน่งปัจจุบันของฉัน" data-en-aria="Go to my current location" aria-label="ไปยังตำแหน่งปัจจุบันของฉัน">
+      <span aria-hidden="true" data-icon="locate"></span>
+    </button>
+
+    <button type="button" class="fab" id="fab-add" data-th-aria="เพิ่มสถานที่ใหม่ หรือให้ข้อมูลความเข้าถึง" data-en-aria="Add a new place or rate accessibility" aria-label="เพิ่มสถานที่ใหม่ หรือให้ข้อมูลความเข้าถึง">
+      <span aria-hidden="true" data-icon="plus"></span>
+      <span data-th="เพิ่ม/ให้ข้อมูล" data-en="Add / rate">เพิ่ม/ให้ข้อมูล</span>
+    </button>
+
+    <div class="more-menu-wrap">
+      <div class="more-menu" id="more-menu" role="menu" data-th-aria="เมนูเครื่องมือเพิ่มเติม" data-en-aria="More tools menu" aria-label="เมนูเครื่องมือเพิ่มเติม" hidden>
+        <button type="button" class="more-menu-item" id="menu-route-btn" role="menuitem">
+          <span aria-hidden="true" data-icon="route"></span>
+          <span data-th="วางแผนเส้นทาง" data-en="Plan a route">วางแผนเส้นทาง</span>
+        </button>
+        <button type="button" class="more-menu-item more-menu-item-emergency" id="menu-emergency-btn" role="menuitem">
+          <span aria-hidden="true" data-icon="emergency"></span>
+          <span data-th="ฉุกเฉิน: จุดใกล้สุด" data-en="Emergency: nearest">ฉุกเฉิน: จุดใกล้สุด</span>
+        </button>
+      </div>
+      <button type="button" class="map-fab-secondary" id="fab-more" aria-haspopup="true" aria-expanded="false" aria-controls="more-menu" data-th-aria="เครื่องมือเพิ่มเติม เส้นทางและจุดฉุกเฉิน" data-en-aria="More tools: routing and emergency nearest point" aria-label="เครื่องมือเพิ่มเติม เส้นทางและจุดฉุกเฉิน">
+        <span aria-hidden="true" data-icon="moreDots"></span>
+        <span data-th="เพิ่มเติม" data-en="More">เพิ่มเติม</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="story-section" id="readable-default" data-readable-active="true">
+    <div class="stat-row">
+      <div class="stat-item reveal stagger-1">
+        <span class="stat-number" id="stat-places" data-counter data-counter-target="0">0</span>
+        <span class="stat-label" data-th="สถานที่บนแผนที่" data-en="Places mapped">สถานที่บนแผนที่</span>
+      </div>
+      <div class="stat-item reveal stagger-2">
+        <span class="stat-number" id="stat-contributions" data-counter data-counter-target="0">0</span>
+        <span class="stat-label" data-th="การให้ข้อมูล" data-en="Contributions">การให้ข้อมูล</span>
+      </div>
+      <div class="stat-item reveal stagger-3">
+        <span class="stat-number" id="stat-categories" data-counter data-counter-target="0">0</span>
+        <span class="stat-label" data-th="หมวดหมู่สถานที่" data-en="Categories covered">หมวดหมู่สถานที่</span>
+      </div>
+    </div>
+
+    <div class="feature-card-grid">
+      <div class="feature-card reveal stagger-1">
+        <span class="feature-card-icon" aria-hidden="true" data-icon="mapPin"></span>
+        <h3 data-th="เช็คก่อนไป" data-en="Check first">เช็คก่อนไป</h3>
+        <span class="feature-card-arrow" aria-hidden="true" data-icon="chevronRight"></span>
+      </div>
+      <div class="feature-card reveal stagger-2">
+        <span class="feature-card-icon" aria-hidden="true" data-icon="edit"></span>
+        <h3 data-th="ให้ข้อมูลไว" data-en="Rate it fast">ให้ข้อมูลไว</h3>
+        <span class="feature-card-arrow" aria-hidden="true" data-icon="chevronRight"></span>
+      </div>
+      <div class="feature-card reveal stagger-3">
+        <span class="feature-card-icon" aria-hidden="true" data-icon="people"></span>
+        <h3 data-th="ยิ่งช่วย ยิ่งแม่น" data-en="More voices, more accurate">ยิ่งช่วย ยิ่งแม่น</h3>
+        <span class="feature-card-arrow" aria-hidden="true" data-icon="chevronRight"></span>
+      </div>
+    </div>
+
+    <div class="category-strip reveal">
+      <p class="strip-caption" data-th="ครอบคลุมทุกหมวดหมู่" data-en="Every category, covered">ครอบคลุมทุกหมวดหมู่</p>
+      <div class="strip-row" id="category-strip-row"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <details class="disclosure-pill reveal">
+      <summary data-th-aria="เปิด/ปิด ข้อมูลเกี่ยวกับต้นแบบนี้" data-en-aria="Expand or collapse information about this prototype" aria-label="เปิด/ปิด ข้อมูลเกี่ยวกับต้นแบบนี้">
+        <span aria-hidden="true" data-icon="info"></span>
+        <span data-th="เกี่ยวกับต้นแบบนี้" data-en="About this prototype">เกี่ยวกับต้นแบบนี้</span>
+        <span class="disclosure-chevron" aria-hidden="true" data-icon="chevronDown"></span>
+      </summary>
+      <div class="disclosure-body">
+        <p data-th="RollRoute เป็นต้นแบบ (prototype) ที่พัฒนาขึ้นสำหรับการประกวด Thailand ICT Awards (TICTA) 2026 ประเภท Inclusion and Community Services / Disability Sector" data-en="RollRoute is a prototype built for the Thailand ICT Awards (TICTA) 2026 competition, Inclusion and Community Services / Disability Sector category.">
+          RollRoute เป็นต้นแบบ (prototype) ที่พัฒนาขึ้นสำหรับการประกวด Thailand ICT Awards (TICTA) 2026 ประเภท Inclusion and Community Services / Disability Sector
+        </p>
+        <p data-th="โครงการนี้ใช้ความช่วยเหลือจากปัญญาประดิษฐ์ (Claude by Anthropic) ในการพัฒนา ภายใต้การกำกับดูแล ตรวจสอบ และตัดสินใจโดยทีมผู้พัฒนาซึ่งเป็นมนุษย์ตลอดกระบวนการ" data-en="This project used AI assistance (Claude by Anthropic) during development, with direction, review, and final decisions made by the human development team throughout.">
+          โครงการนี้ใช้ความช่วยเหลือจากปัญญาประดิษฐ์ (Claude by Anthropic) ในการพัฒนา ภายใต้การกำกับดูแล ตรวจสอบ และตัดสินใจโดยทีมผู้พัฒนาซึ่งเป็นมนุษย์ตลอดกระบวนการ
+        </p>
+        <p data-th="ข้อมูลความเข้าถึงที่แสดงบนแผนที่นี้มาจากการให้ข้อมูลของชุมชนผู้ใช้งาน อาจไม่เป็นปัจจุบันหรือถูกต้องเสมอไป โปรดตรวจสอบข้อมูลเพิ่มเติมกับสถานที่จริงก่อนเดินทางในกรณีที่จำเป็น ข้อมูลตัวอย่างเริ่มต้นในระบบเป็นข้อมูลสมมติเพื่อการสาธิตเท่านั้น" data-en="Accessibility data shown here is community-contributed and may not always be current or accurate. Please confirm with the venue directly when it matters. The starter dataset shown by default is fictional demo data for demonstration purposes only.">
+          ข้อมูลความเข้าถึงที่แสดงบนแผนที่นี้มาจากการให้ข้อมูลของชุมชนผู้ใช้งาน อาจไม่เป็นปัจจุบันหรือถูกต้องเสมอไป โปรดตรวจสอบข้อมูลเพิ่มเติมกับสถานที่จริงก่อนเดินทางในกรณีที่จำเป็น ข้อมูลตัวอย่างเริ่มต้นในระบบเป็นข้อมูลสมมติเพื่อการสาธิตเท่านั้น
+        </p>
+        <p data-th="หากคุณกดใช้ตำแหน่งปัจจุบัน ตำแหน่งของคุณจะถูกใช้ในเบราว์เซอร์ของคุณเท่านั้น เพื่อแสดงบนแผนที่และคำนวณระยะทางไปยังสถานที่ต่าง ๆ ไม่มีการบันทึกหรือส่งตำแหน่งของคุณไปที่ใดทั้งสิ้น" data-en="If you use the current-location button, your position is used only in your own browser — to center the map and calculate distances to places. It is never stored or sent anywhere.">
+          หากคุณกดใช้ตำแหน่งปัจจุบัน ตำแหน่งของคุณจะถูกใช้ในเบราว์เซอร์ของคุณเท่านั้น เพื่อแสดงบนแผนที่และคำนวณระยะทางไปยังสถานที่ต่าง ๆ ไม่มีการบันทึกหรือส่งตำแหน่งของคุณไปที่ใดทั้งสิ้น
+        </p>
+      </div>
+    </details>
+  </div>
+</footer>
+
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+
+<section class="sheet" id="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-sheet-title" data-readable-active="false">
+  <div class="sheet-grabber" aria-hidden="true"></div>
+  <div class="sheet-header">
+    <h2 id="detail-sheet-title"></h2>
+    <button type="button" class="sheet-close" id="detail-sheet-close" data-th-aria="ปิดหน้าต่างรายละเอียด" data-en-aria="Close details" aria-label="ปิดหน้าต่างรายละเอียด"><span aria-hidden="true" data-icon="close"></span></button>
+  </div>
+  <div class="sheet-body" id="detail-sheet-body"></div>
+  <div class="sheet-footer" id="detail-sheet-footer"></div>
+</section>
+
+<section class="sheet" id="add-sheet" role="dialog" aria-modal="true" aria-labelledby="add-sheet-title" data-readable-active="false">
+  <div class="sheet-grabber" aria-hidden="true"></div>
+  <div class="sheet-header">
+    <h2 id="add-sheet-title" data-th="เพิ่ม / ให้ข้อมูลสถานที่" data-en="Add / rate a place">เพิ่ม / ให้ข้อมูลสถานที่</h2>
+    <button type="button" class="sheet-close" id="add-sheet-close" data-th-aria="ปิดแบบฟอร์ม" data-en-aria="Close form" aria-label="ปิดแบบฟอร์ม"><span aria-hidden="true" data-icon="close"></span></button>
+  </div>
+  <div class="sheet-body" id="add-sheet-body"></div>
+  <div class="sheet-footer" id="add-sheet-footer"></div>
+</section>
+
+<section class="sheet" id="route-sheet" role="dialog" aria-modal="true" aria-labelledby="route-sheet-title" data-readable-active="false">
+  <div class="sheet-grabber" aria-hidden="true"></div>
+  <div class="sheet-header">
+    <h2 id="route-sheet-title" data-th="วางแผนเส้นทาง" data-en="Plan a route">วางแผนเส้นทาง</h2>
+    <button type="button" class="sheet-close" id="route-sheet-close" data-th-aria="ปิดหน้าต่างวางแผนเส้นทาง" data-en-aria="Close route planner" aria-label="ปิดหน้าต่างวางแผนเส้นทาง"><span aria-hidden="true" data-icon="close"></span></button>
+  </div>
+  <div class="sheet-body" id="route-sheet-body"></div>
+  <div class="sheet-footer" id="route-sheet-footer"></div>
+</section>
+
+<section class="sheet" id="nearby-sheet" role="dialog" aria-modal="true" aria-labelledby="nearby-sheet-title" data-readable-active="false">
+  <div class="sheet-grabber" aria-hidden="true"></div>
+  <div class="sheet-header">
+    <h2 id="nearby-sheet-title" data-th="สถานที่ใกล้คุณ" data-en="Places near you">สถานที่ใกล้คุณ</h2>
+    <button type="button" class="sheet-close" id="nearby-sheet-close" data-th-aria="ปิดหน้าต่างสถานที่ใกล้คุณ" data-en-aria="Close nearby places" aria-label="ปิดหน้าต่างสถานที่ใกล้คุณ"><span aria-hidden="true" data-icon="close"></span></button>
+  </div>
+  <div class="sheet-body" id="nearby-sheet-body"></div>
+</section>
+
+<section class="sheet" id="claim-sheet" role="dialog" aria-modal="true" aria-labelledby="claim-sheet-title" data-readable-active="false">
+  <div class="sheet-grabber" aria-hidden="true"></div>
+  <div class="sheet-header">
+    <h2 id="claim-sheet-title" data-th="อ้างสิทธิ์สถานที่นี้" data-en="Claim this place">อ้างสิทธิ์สถานที่นี้</h2>
+    <button type="button" class="sheet-close" id="claim-sheet-close" data-th-aria="ปิดหน้าต่างอ้างสิทธิ์" data-en-aria="Close claim form" aria-label="ปิดหน้าต่างอ้างสิทธิ์"><span aria-hidden="true" data-icon="close"></span></button>
+  </div>
+  <div class="sheet-body" id="claim-sheet-body"></div>
+</section>
+
+<div id="print-sticker-root" aria-hidden="true"></div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span aria-hidden="true" data-icon="check"></span>
+  <span id="toast-message"></span>
+</div>
+
+<button type="button" class="back-to-top" id="back-to-top" data-th-aria="เลื่อนขึ้นด้านบนสุด" data-en-aria="Back to top" aria-label="เลื่อนขึ้นด้านบนสุด">
+  <span aria-hidden="true" data-icon="chevronDown"></span>
+</button>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="js/icons.js?v=8"></script>
+<script src="js/data.js?v=8"></script>
+<script src="js/storage.js?v=8"></script>
+<script src="js/map.js?v=8"></script>
+<script src="js/a11y.js?v=8"></script>
+<script src="js/main.js?v=8"></script>
+</body>
+</html>
